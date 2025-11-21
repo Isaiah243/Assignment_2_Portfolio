@@ -1,10 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    navigate('/signin');
+  };
+
   return (
-    // Navigation bar with logo and links to all pages
     <nav style={{
       display: 'flex',
       alignItems: 'center',
@@ -25,9 +34,30 @@ const Navbar = () => {
         <li><Link to="/education" style={{color: 'white', textDecoration: 'none'}}>Education</Link></li>
         <li><Link to="/services" style={{color: 'white', textDecoration: 'none'}}>Services</Link></li>
         <li><Link to="/contact" style={{color: 'white', textDecoration: 'none'}}>Contacts</Link></li>
+
+        {!token && (
+          <>
+            <li><Link to="/signin" style={{color: 'white', textDecoration: 'none'}}>Sign In</Link></li>
+            <li><Link to="/signup" style={{color: 'white', textDecoration: 'none'}}>Sign Up</Link></li>
+          </>
+        )}
+
+        {token && (
+          <>
+            {role === 'admin' && (
+              <li><Link to="/admin" style={{color: 'white', textDecoration: 'none'}}>Admin Panel</Link></li>
+            )}
+            <li>
+              <button onClick={handleSignOut} style={{background: 'none', border: 'none', color: 'white', cursor: 'pointer'}}>
+                Sign Out
+              </button>
+            </li>
+          </>
+        )}
       </ul>
     </nav>
   );
 };
 
 export default Navbar;
+

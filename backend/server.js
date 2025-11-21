@@ -3,36 +3,31 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const Contact = require('./contact.model');
 const Qualification = require('./qualification.model');
-const authRoutes = require('./auth.routes');
-const User = require('./user.model');
 const Project = require('./project.model');
-const authMiddleware = require('./auth.middleware'); 
+const User = require('./user.model');
+const authRoutes = require('./auth.routes');
+const authMiddleware = require('./auth.middleware');
 
-dotenv.config(); 
+dotenv.config();
 
 const app = express();
-app.use(express.json()); 
+app.use(express.json());
+
+// Routes
 app.use('/api/auth', authRoutes);
 
-// Connect to MongoDB
+// MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected successfully'))
   .catch(err => console.error('MongoDB connection error:', err));
 
+// Test route
 app.get('/test', (req, res) => {
   res.send('Server is working!');
 });
 
+//  Contact Routes
 app.get('/api/contacts', async (req, res) => {
-  try {
-    const contacts = await Contact.find();
-    res.json(contacts);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-app.get('/check-contacts', async (req, res) => {
   try {
     const contacts = await Contact.find();
     res.json(contacts);
@@ -90,7 +85,7 @@ app.delete('/api/contacts', async (req, res) => {
   }
 });
 
-// Get all projects
+// Project routes
 app.get('/api/projects', async (req, res) => {
   const projects = await Project.find();
   res.json(projects);
@@ -102,30 +97,34 @@ app.get('/api/projects/:id', async (req, res) => {
   res.json(project);
 });
 
-app.post('/api/projects', async (req, res) => {
+app.post('/api/projects', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can create projects' });
   const newProject = new Project(req.body);
   await newProject.save();
   res.status(201).json(newProject);
 });
 
-app.put('/api/projects/:id', async (req, res) => {
+app.put('/api/projects/:id', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can update projects' });
   const updated = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!updated) return res.status(404).json({ message: 'Project not found' });
   res.json(updated);
 });
 
-app.delete('/api/projects/:id', async (req, res) => {
+app.delete('/api/projects/:id', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can delete projects' });
   const deleted = await Project.findByIdAndDelete(req.params.id);
   if (!deleted) return res.status(404).json({ message: 'Project not found' });
   res.json({ message: 'Project deleted' });
 });
 
-app.delete('/api/projects', async (req, res) => {
+app.delete('/api/projects', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can delete all projects' });
   await Project.deleteMany();
   res.json({ message: 'All projects deleted' });
 });
 
-// Get all qualifications
+//  Qualification Routes
 app.get('/api/qualifications', async (req, res) => {
   const qualifications = await Qualification.find();
   res.json(qualifications);
@@ -137,34 +136,34 @@ app.get('/api/qualifications/:id', async (req, res) => {
   res.json(qualification);
 });
 
-app.post('/api/qualifications', async (req, res) => {
+app.post('/api/qualifications', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can create qualifications' });
   const newQualification = new Qualification(req.body);
   await newQualification.save();
   res.status(201).json(newQualification);
 });
 
-app.put('/api/qualifications/:id', async (req, res) => {
-  const updatedQualification = await Qualification.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
-  if (!updatedQualification) return res.status(404).json({ message: 'Qualification not found' });
-  res.json(updatedQualification);
+app.put('/api/qualifications/:id', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can update qualifications' });
+  const updated = await Qualification.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!updated) return res.status(404).json({ message: 'Qualification not found' });
+  res.json(updated);
 });
 
-app.delete('/api/qualifications/:id', async (req, res) => {
-  const deletedQualification = await Qualification.findByIdAndDelete(req.params.id);
-  if (!deletedQualification) return res.status(404).json({ message: 'Qualification not found' });
+app.delete('/api/qualifications/:id', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can delete qualifications' });
+  const deleted = await Qualification.findByIdAndDelete(req.params.id);
+  if (!deleted) return res.status(404).json({ message: 'Qualification not found' });
   res.json({ message: 'Qualification deleted' });
 });
 
-app.delete('/api/qualifications', async (req, res) => {
+app.delete('/api/qualifications', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can delete all qualifications' });
   await Qualification.deleteMany();
   res.json({ message: 'All qualifications deleted' });
 });
 
-// Get all users 
+//  User Routes
 app.get('/api/users', authMiddleware, async (req, res) => {
   const users = await User.find();
   res.json(users);
@@ -176,34 +175,39 @@ app.get('/api/users/:id', authMiddleware, async (req, res) => {
   res.json(user);
 });
 
-// Create a new user 
 app.post('/api/users', async (req, res) => {
-  const newUser = new User(req.body);
-  await newUser.save();
-  res.status(201).json(newUser);
+  const { name, email, password, role } = req.body;
+  const existing = await User.findOne({ email });
+  if (existing) return res.status(400).json({ message: 'User already exists' });
+
+  const bcrypt = require('bcryptjs');
+  const hashed = await bcrypt.hash(password, 10);
+
+  const user = new User({ name, email, password: hashed, role: role || 'user' });
+  await user.save();
+  res.status(201).json(user);
 });
 
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
-  const updatedUser = await User.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
-  if (!updatedUser) return res.status(404).json({ message: 'User not found' });
-  res.json(updatedUser);
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can update users' });
+  const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!updated) return res.status(404).json({ message: 'User not found' });
+  res.json(updated);
 });
 
 app.delete('/api/users/:id', authMiddleware, async (req, res) => {
-  const deletedUser = await User.findByIdAndDelete(req.params.id);
-  if (!deletedUser) return res.status(404).json({ message: 'User not found' });
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can delete users' });
+  const deleted = await User.findByIdAndDelete(req.params.id);
+  if (!deleted) return res.status(404).json({ message: 'User not found' });
   res.json({ message: 'User deleted' });
 });
 
 app.delete('/api/users', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Only admin can delete all users' });
   await User.deleteMany();
   res.json({ message: 'All users deleted' });
 });
 
-// Start server
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
