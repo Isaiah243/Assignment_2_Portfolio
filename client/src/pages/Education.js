@@ -34,7 +34,7 @@ const Education = () => {
 
   const fetchEducation = async () => {
     try {
-      const res = await fetch('http://localhost:5000/education', {
+      const res = await fetch('http://localhost:5000/api/education', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -59,7 +59,7 @@ const Education = () => {
     if (!token) return alert('Please sign in to save education');
 
     try {
-      await fetch('http://localhost:5000/education', {
+      await fetch('http://localhost:5000/api/education', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ const Education = () => {
     if (!window.confirm('Delete this entry?')) return;
 
     try {
-      await fetch(`http://localhost:5000/education/${id}`, {
+      await fetch(`http://localhost:5000/api/education/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

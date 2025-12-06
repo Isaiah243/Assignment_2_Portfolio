@@ -1,4 +1,4 @@
-const Project = require('./Project');
+const Project = require('./project.model');
 
 exports.getProjects = async (req, res) => {
   const data = await Project.find();
@@ -12,6 +12,7 @@ exports.createProject = async (req, res) => {
 };
 
 exports.deleteProject = async (req, res) => {
-  await Project.findByIdAndDelete(req.params.id);
+  const deleted = await Project.findByIdAndDelete(req.params.id);
+  if (!deleted) return res.status(404).json({ message: 'Project not found' });
   res.json({ message: 'Deleted' });
 };

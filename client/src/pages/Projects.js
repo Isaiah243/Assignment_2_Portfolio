@@ -37,7 +37,7 @@ const Project = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch('http://localhost:5000/projects', {
+      const res = await fetch('http://localhost:5000/api/projects', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -62,7 +62,7 @@ const Project = () => {
     if (!token) return alert('Sign in to add projects');
 
     try {
-      await fetch('http://localhost:5000/projects', {
+      await fetch('http://localhost:5000/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ const Project = () => {
     if (!window.confirm('Delete this project?')) return;
 
     try {
-      await fetch(`http://localhost:5000/projects/${id}`, {
+      await fetch(`http://localhost:5000/api/projects/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

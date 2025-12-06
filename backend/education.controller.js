@@ -1,4 +1,4 @@
-const Education = require('./Education');
+const Education = require('./education.model');
 
 exports.getEducation = async (req, res) => {
   const data = await Education.find();
@@ -12,6 +12,7 @@ exports.createEducation = async (req, res) => {
 };
 
 exports.deleteEducation = async (req, res) => {
-  await Education.findByIdAndDelete(req.params.id);
+  const deleted = await Education.findByIdAndDelete(req.params.id);
+  if (!deleted) return res.status(404).json({ message: 'Education not found' });
   res.json({ message: 'Deleted' });
 };

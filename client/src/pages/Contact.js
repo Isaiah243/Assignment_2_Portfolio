@@ -24,7 +24,7 @@ const Contact = () => {
 
   const fetchContacts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/contacts', {
+      const res = await fetch('http://localhost:5000/api/contacts', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -44,7 +44,7 @@ const Contact = () => {
     setSuccess('');
 
     try {
-      const res = await fetch('http://localhost:5000/contacts', {
+      const res = await fetch('http://localhost:5000/api/contacts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ const Contact = () => {
     if (!window.confirm('Are you sure you want to delete this contact?')) return;
 
     try {
-      await fetch(`http://localhost:5000/contacts/${id}`, {
+      await fetch(`http://localhost:5000/api/contacts/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
